@@ -1,0 +1,283 @@
+(include "test.yuck")
+(include "widget_overlay.yuck")
+
+(defwidget top_bar []
+  (centerbox
+    :orientation "horizontal"
+    :class "top_bar"
+    (box
+      :orientation "horizontal"
+      :class "top_bar_left"
+      :space-evenly false
+      (time_widget)
+      (calendar_widget)
+      (audio_output)
+      (audio_input)
+    )
+    (box :orientation "horizontal"
+      :class "top_bar_center"
+      :space-evenly false
+      (workspaces)
+    )
+    (box :orientation "horizontal"
+      :space-evenly false
+      :class "top_bar_right"
+      :halign "end"
+      (cpu_widget)
+      (powermenu)
+      (ram_widget)
+    )
+  )
+)
+
+(defwindow top_bar
+  :monitor 0
+  :geometry
+  (geometry
+    :x "0px"
+    :y "10px"
+    :width "2540px"
+    :height "30px"
+    :anchor "top center"
+  )
+  :stacking "fg"
+  :windowtype "dock"
+  :exclusive true
+  
+  (top_bar)
+)
+
+(defwindow calendar
+  :monitor 0
+  :geometry
+  (geometry
+    :x "10px"
+    :y "10px"
+    :height "30px"
+    :anchor "top left"
+  )
+  :stacking "fg"
+  
+  (calendar_overlay_widget)
+)
+
+(defwidget calendar_overlay_widget []
+  (box
+    :orientation "horizontal"
+    :class "calendar_container"
+    (calendar
+      :class "calendar"
+      :day day
+      :month month
+      :year year
+    )
+  )
+)
+
+(defwidget time_widget []
+  (box
+    :orientation "horizontal"
+    :class "time_widget"
+    :tooltip "It is currently ${time_hour} ${time_apm} and ${time_minute} minutes."
+    " ${time_hour}:${time_minute} ${time_apm}"
+  )
+)
+
+(defwidget calendar_widget []
+  (box
+    :orientation "horizontal"
+    :class "calendar_widget"
+    :tooltip "Today is ${day}th ${month}, ${year}"
+    (button
+      :onclick "${EWW_CMD} ${calendar_overlay_open ? "close" : "open"} calendar && ${EWW_CMD} update calendar_overlay_open=${!calendar_overlay_open}" " ${day} ${month} ${year}"
+    )
+  )
+)
+
+(defvar calendar_overlay_open false)
+
+(defpoll month :interval "10m" "date +%b")
+(defpoll day :interval "10m" "date +%d")
+(defpoll year :interval "10m" "date +%Y")
+
+(defwidget audio_output []
+  (eventbox
+    :onhover "${EWW_CMD} update audio_slider_revealed=true"
+    :onhoverlost "${EWW_CMD} update audio_slider_revealed=false"
+    (box
+      :orientation "horizontal"
+      :class "audio_output_widget"
+      :space-evenly false
+      :tooltip "Your current volume is set to ${volume}%."
+      (box
+        :class "volume_icon"
+        (button
+          :onclick "pamixer -t && ${EWW_CMD} update is_volume_muted=${is_volume_muted ? "false" : "true"}" {is_volume_muted || volume == 0 ? " " : " "}
+        )
+      )
+      (revealer
+        :transition "slideleft"
+        :reveal {is_volume_muted ? false : true}
+        :duration "500ms"
+        (scale
+          :class "audio_output_slider"
+          :orientation "horizontal"
+          :round-digits 0
+          :min 0
+          :max 100
+          :onchange "pamixer -u && pamixer --set-volume {} && ${EWW_CMD} update volume={}"
+          :value volume
+        )
+      )
+    )
+  )
+)
+
+(defwidget audio_input []
+  (eventbox
+    :onhover "${EWW_CMD} update mic_slider_revealed=true"
+    :onhoverlost "${EWW_CMD} update mic_slider_revealed=false"
+    (box
+      :orientation "horizontal"
+      :class "audio_input_widget"
+      :space-evenly false
+      :tooltip "Your current volume is set to ${mic_volume}%."
+      (box
+        :class "volume_icon"
+        (button
+          :onclick "pamixer --default-source -t && ${EWW_CMD} update is_mic_muted=${is_mic_muted ? "false" : "true"}" {is_mic_muted || mic_volume == 0 ? " " : " "}
+        )
+      )
+      (revealer
+        :transition "slideleft"
+        :reveal {mic_slider_revealed && !is_mic_muted}
+        :duration "500ms"
+        (scale
+          :class "audio_input_slider"
+          :orientation "horizontal"
+          :round-digits 0
+          :min 0
+          :max 100
+          :onchange "pamixer --default-source -u && pamixer --default-source --set-volume {} && ${EWW_CMD} update mic_volume={}"
+          :value mic_volume
+        )
+      )
+    )
+  )
+)
+
+(defpoll volume
+  :initial 0.0
+  :interval "100s"
+  "pamixer --get-volume"
+)
+
+(defpoll mic_volume
+  :initial 0.0
+  :interval "0.1s"
+  "pamixer --default-source --get-volume"
+)
+
+(defpoll is_volume_muted
+  :initial true
+  :interval "5s"
+  "pamixer --get-mute"
+)
+
+(defpoll is_mic_muted
+  :initial true
+  :interval "5s"
+  "pamixer --default-source --get-mute"
+)
+
+(defvar audio_slider_revealed false)
+(defvar mic_slider_revealed false)
+
+(defwidget cpu_widget []
+  (box
+    :orientation "horizontal"
+    :class "cpu_widget"
+    (label
+      :text "${round(EWW_CPU.avg, 0)}% CPU"
+    )
+  )
+)
+
+(defwidget ram_widget []
+  (box :orientation "horizontal"
+    :class "ram_widget"
+    (label :text  '${round(EWW_RAM.used_mem_perc, 1)}% RAM')
+  )
+)
+
+(defwidget wofi_widget []
+  (button
+    :class "wofi_widget"
+    :onclick "wofi --fork" "☰"
+  )
+)
+
+(defwidget powermenu []
+  (eventbox
+    :onhover "${EWW_CMD} update powermenu_revealed=true"
+    :onhoverlost "${EWW_CMD} update powermenu_revealed=false"
+    (box
+      :space-evenly false
+      :class "powermenu"
+      (revealer
+        :transition "slideright"
+        :reveal powermenu_revealed
+        :duration "500ms"
+        (box
+          :orientation "horizontal"
+          :space-evenly false
+          :class "powermenu_revealed"
+          (button
+            :class "lock_button"
+            :tooltip "Lock the screen"
+            :onclick "eww update powermenu_revealed=false && sh scripts/swaylock.sh" "🔒"
+          )
+          (button
+            :class "reboot_button"
+            :tooltip "Reboot"
+            :onclick "reboot" ""
+          )
+          (button
+            :class "logout_button"
+            :tooltip "Log out"
+            :onclick "logout" ""
+          )
+        )
+      )
+      (button
+        :class "powermenu_icon poweroff_button"
+        :tooltip "Power off"
+        :onclick "shutdown -h now" "⏻")
+    )
+  )
+)
+
+(defvar powermenu_revealed false)
+
+(defpoll time_hour :interval "1m" `date +%I`)
+(defpoll time_minute :interval "1m" 'date +%M')
+(defpoll time_apm :interval "1m" 'date +%p')
+
+(deflisten workspaces :initial "[]" "bash ~/.config/eww/scripts/get-workspaces")
+(deflisten current_workspace :initial "1" "bash ~/.config/eww/scripts/get-active-workspace")
+(defwidget workspaces []
+  (eventbox :onscroll "bash ~/.config/eww/scripts/change-active-workspace {} ${current_workspace}" :class "workspaces_widget"
+    (box :space-evenly false
+      :class "workspaces_container"
+      (label :text "${workspaces}${current_workspace}" :visible false)
+      (for workspace in workspaces
+        (eventbox :onclick "hyprctl dispatch workspace ${workspace.id}"
+          (box :class "workspace_entry ${workspace.id == current_workspace ? "current" : ""} ${workspace.windows > 0 ? "occupied" : "empty"}"
+            :visible "${workspace.windows > 0 || workspace.id == current_workspace ? true : false}"
+            (label :text "${workspace.id}")
+          )
+        )
+      )
+    )
+  )
+)

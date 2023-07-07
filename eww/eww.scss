@@ -1,0 +1,151 @@
+* {
+  all: unset;
+  font-family: "JetBrainsMono Nerd Font";
+  font-weight: bold;
+  font-size: 12px;
+  min-height: 0;
+}
+
+// Variable Color's
+$background: #1e1e2e;
+$border: #181825;
+$foreground: #A9B1D6;
+
+$black: #24283B;
+$gray: #565F89;
+$red: #F7768E;
+$green: #73DACA;
+$yellow: #E0AF68;
+$blue: #7AA2F7;
+$magenta: #BB9AF7;
+$cyan: #7DCFFF;
+$white: $foreground;
+
+.workspaces_container,
+.audio_output_widget,
+.audio_input_widget,
+.wofi_widget,
+.calendar_widget,
+.time_widget,
+.cpu_widget,
+.ram_widget {
+  background: $background;
+  opacity: 0.8;
+  border: 1px solid $border;
+  border-radius: 10px;
+}
+
+.audio_output_widget {
+  margin-right: 10px;
+}
+
+.logout_button,
+.reboot_button,
+.poweroff_button,
+.lock_button {
+  background: $background;
+  opacity: 0.8;
+  border: 1px solid $border;
+  padding: 0 10px;
+  border-radius: 0;
+}
+
+.powermenu_icon {
+  padding: 0 13px 0 10px;
+}
+
+.time_widget {
+  padding: 0 10px;
+  border-radius: 10px 0 0 10px;
+}
+
+.calendar_widget {
+  padding: 0 10px;
+  border-radius: 0 10px 10px 0;
+  margin-right: 10px;
+}
+.cpu_widget {
+  border-radius: 10px 0 0 10px;
+  padding: 0 10px;
+}
+
+.cpu_text {
+  font-family: "JetBrainsMono Nerd Font";
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.cpu_circle_container {
+  padding: 5px;
+}
+
+.ram_widget {
+  border-radius: 0 10px 10px 0;
+  padding: 0 10px;
+}
+
+.wofi_widget {
+  padding: 0 10px;
+}
+
+scale trough {
+  all: unset;
+  background-color: #000000;
+  border-radius: 5px;
+  min-height: 8px;
+  min-width: 80px;
+  margin: 0 10px 0 0;
+}
+
+.volume_icon {
+  padding: 0 5px 0 10px;
+}
+
+.audio_input_slider trough highlight,
+.audio_output_slider trough highlight {
+  background-color: #FFFFFF;
+  border-radius: 5px;
+}
+
+.workspace_entry {
+  padding: 0 10px;
+  color: #313244;
+}
+
+.workspace_entry.current {
+  color: #a6adc8;
+  border: 1px solid rgba(#a6adc8, 0);
+  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.calendar_container {
+  background-color: $background;
+  border-radius: 20px;
+}
+
+.calendar {
+  padding: 5 10px;
+}
+
+calendar:selected {
+  color: $blue;
+}
+
+calendar.header {
+color: $blue;
+font-weight: bold;
+}
+
+calendar.button {
+color: $magenta;
+}
+
+calendar.highlight {
+color: $magenta;
+font-weight: bold;
+}
+
+calendar:indeterminate {
+color: $background;
+}

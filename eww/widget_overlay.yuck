@@ -1,0 +1,10 @@
+(defwindow overlay
+  :monitor 0
+  :geometry
+  (geometry
+    :anchor "center center"
+  )
+  :stacking "overlay"
+  
+  (calendar_overlay_widget)
+)
