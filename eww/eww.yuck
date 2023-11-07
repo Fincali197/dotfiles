@@ -1,28 +1,32 @@
 (include "test.yuck")
 (include "widget_overlay.yuck")
 
-(defwidget top_bar []
+(defwidget bar []
   (centerbox
     :orientation "horizontal"
-    :class "top_bar"
+    :class "bar"
     (box
       :orientation "horizontal"
-      :class "top_bar_left"
+      :class "bar_left"
       :space-evenly false
+      :halign "start"
       (time_widget)
       (calendar_widget)
       (audio_output)
       (audio_input)
+      (keyboard_layout)
+      ;(open_overlay)
     )
     (box :orientation "horizontal"
-      :class "top_bar_center"
+      :class "bar_center"
       :space-evenly false
       (workspaces)
     )
     (box :orientation "horizontal"
       :space-evenly false
-      :class "top_bar_right"
+      :class "bar_right"
       :halign "end"
+      (music)
       (cpu_widget)
       (powermenu)
       (ram_widget)
@@ -30,21 +34,21 @@
   )
 )
 
-(defwindow top_bar
+(defwindow bar
   :monitor 0
   :geometry
   (geometry
     :x "0px"
-    :y "10px"
-    :width "2540px"
-    :height "30px"
-    :anchor "top center"
+    :y "0px"
+    :width "100%"
+    :height "40px"
+    :anchor "bottom center"
   )
-  :stacking "fg"
+  :stacking "bg"
   :windowtype "dock"
   :exclusive true
   
-  (top_bar)
+  (bar)
 )
 
 (defwindow calendar
@@ -54,14 +58,129 @@
     :x "10px"
     :y "10px"
     :height "30px"
-    :anchor "top left"
+    :anchor "bottom left"
   )
   :stacking "fg"
   
-  (calendar_overlay_widget)
+  (overlay_calendar_widget)
 )
 
-(defwidget calendar_overlay_widget []
+;(defpoll music_volume
+;  :initial 0.500000
+;  :interval "1s"
+;  "playerctl volume"
+;)
+(defvar music_volume_revealed false)
+(defwidget music []
+  (revealer
+    :transition "slideright"
+    :reveal {active_music_playing_full!="" && is_music_playing!="No players found" ? true : false}
+    (box
+      :class "music_container"
+      :space-evenly false
+      ;(box
+      ;  :orientation "horizontal"
+      ;  :class "music_volume_control"
+      ;  :space-evenly false
+      ;  (button
+      ;    :class "music_volume_icon"
+      ;    :onclick "${EWW_CMD} update music_volume_revealed=${!music_volume_revealed}"
+      ;    "󰖀"
+      ;  )
+      ;  (revealer
+      ;    :transition "slideleft"
+      ;    :reveal true ;{music_volume_revealed}
+      ;    :duration "500ms"
+      ;    (scale
+      ;      :class "music_volume_slider"
+      ;      :orientation "horizontal"
+      ;      :min 0.0
+      ;      :max 1.0
+      ;      :onchange "playerctl volume {}"
+      ;      :value music_volume
+      ;    )
+      ;  )
+      ;)
+    (button
+        :class "music_stop button"
+        :onclick "playerctl stop && eww update is_music_playing=\"No players found\""
+        (label
+            :class "music_stop text"
+            :text ""
+        )
+    )
+    (button
+        :onclick "${EWW_CMD} update full_music_title_shown=${full_music_title_shown && active_music_playing != ""? false : true}"
+        (label
+            :class "music_title"
+            :text "${full_music_title_shown ? "󰎈 ${active_music_playing_full}" : "󰎈 ${active_music_playing}${active_music_playing_full==active_music_playing ? "" : " →"}"}"
+        )
+    )
+      (box
+        :space-evenly false
+        :class "music_control"
+        (button
+          :class "music_prev"
+          :onclick "playerctl previous"
+          (label
+            :class "music_prev text"
+            :text "󰒮"
+          )
+        )
+        (button
+          :class "music_pause button"
+          :onclick "playerctl play-pause && ${EWW_CMD} update is_music_playing=${is_music_playing=="Playing" ? "Paused" : "Playing"}"
+          (label
+            :class "music_pause text"
+            :text "${is_music_playing!="Playing" ? "" : ""}"
+          )
+        )
+        (button
+          :class "music_next"
+          :onclick "playerctl next"
+          (label
+            :class "music_next text"
+            :text "󰒭"
+          )
+        )
+      )
+    )
+  )
+)
+
+(defpoll is_music_playing
+  :interval "1s"
+  "playerctl status"
+)
+
+(defvar full_music_title_shown false)
+(defpoll active_music_playing
+  :initial "L + ratio"
+  :interval "1s"
+  "playerctl metadata --format '{{ title }}' | stdbuf -o0 awk -F '-|\\\\(' '{print $1}' | awk '{print \$1, \$2, \$3, \$4, \$5}' | awk '{gsub(/^[ \\t|\"\\t]+|[ \\t|\"\\t]+\$/, \"\", \$0); print}'"
+)
+(defpoll active_music_playing_full
+  :initial "L + ratio full"
+  :interval "1s"
+  "playerctl metadata --format '{{ title }}' | stdbuf -o0 awk '{gsub(/^[ \\t|\"\\t]+|[ \\t|\"\\t]+\$/, \"\", \$0); print}'"
+)
+
+(defwidget keyboard_layout []
+  (box
+    :class "${active_keyboard_layout=="" ? "hidden" : "keyboard_layout_container"}"
+    (label
+      :class "keyboard_layout_text"
+      :text "${active_keyboard_layout}"
+    )
+  )
+)
+
+(deflisten active_keyboard_layout
+  :initial ""
+  "sh ~/.config/eww/scripts/get-active-language"
+)
+
+(defwidget overlay_calendar_widget []
   (box
     :orientation "horizontal"
     :class "calendar_container"
@@ -73,6 +192,19 @@
     )
   )
 )
+
+(defwidget open_overlay []
+  (button
+    :class "open_overlay_button"
+    :onclick "${EWW_CMD} update is_overlay_open=${is_overlay_open ? "false" : "true"} && ${EWW_CMD} ${is_overlay_open ? "close" : "open"} overlay"
+    (label
+      :class "open_overlay_text"
+      :text "${is_overlay_open ? "close overlay": "open overlay"}"
+    )
+  )
+)
+
+(defvar is_overlay_open false)
 
 (defwidget time_widget []
   (box
@@ -168,7 +300,7 @@
 
 (defpoll volume
   :initial 0.0
-  :interval "100s"
+  :interval "10s"
   "pamixer --get-volume"
 )
 
@@ -210,13 +342,6 @@
   )
 )
 
-(defwidget wofi_widget []
-  (button
-    :class "wofi_widget"
-    :onclick "wofi --fork" "☰"
-  )
-)
-
 (defwidget powermenu []
   (eventbox
     :onhover "${EWW_CMD} update powermenu_revealed=true"
@@ -245,7 +370,7 @@
           (button
             :class "logout_button"
             :tooltip "Log out"
-            :onclick "logout" ""
+            :onclick "hyprctl dispatch exit" ""
           )
         )
       )
@@ -266,7 +391,7 @@
 (deflisten workspaces :initial "[]" "bash ~/.config/eww/scripts/get-workspaces")
 (deflisten current_workspace :initial "1" "bash ~/.config/eww/scripts/get-active-workspace")
 (defwidget workspaces []
-  (eventbox :onscroll "bash ~/.config/eww/scripts/change-active-workspace {} ${current_workspace}" :class "workspaces_widget"
+  (eventbox :class "workspaces_widget"
     (box :space-evenly false
       :class "workspaces_container"
       (label :text "${workspaces}${current_workspace}" :visible false)

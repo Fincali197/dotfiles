@@ -6,5 +6,72 @@
   )
   :stacking "overlay"
   
-  (calendar_overlay_widget)
+  (box
+    :space-evenly false
+    :orientation "v"
+    (box
+      :space-evenly false
+      (overlay_calendar_widget)
+      (overlay_cpu)
+      (overlay_ram)
+    )
+    (box
+      (splash_widget)
+    )
+  )
+)
+
+(defwidget overlay_cpu []
+  (box
+    :class "cpu_overlay_container"
+    :orientation "vertical"
+    :space-evenly false
+    (progress
+      :halign "center"
+      :class "cpu_overlay_progress sys_progress"
+      :value {EWW_CPU.avg}
+      :orientation "v"
+      :flipped true
+    )
+    (label
+      :class "cpu_overlay_text"
+      :text ""
+      :halign "center"
+    )
+  )
+)
+
+(defwidget overlay_ram []
+  (box
+    :class "ram_overlay_container"
+    :orientation "vertical"
+    :space-evenly false
+    (progress
+      :class "ram_overlay_progress sys_progress"
+      :value {EWW_RAM.used_mem_perc}
+      :orientation "v"
+      :flipped true
+      :halign "center"
+    )
+    (label
+      :class "ram_overlay_text"
+      :text "󰍛"
+      :halign "center"
+    )
+  )
+)
+
+(defwidget splash_widget []
+  (box
+    :class "splash_container"
+    (label
+      :class "splash_text"
+      :text "${splash}"
+    )
+  )
+)
+
+(defpoll splash
+  :interval "60m"
+  "hyprctl splash"
 )

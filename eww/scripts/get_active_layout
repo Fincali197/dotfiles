@@ -1,0 +1,1 @@
+hyprctl devices -j | jq --raw-output '.keyboards | .[7].active_keymap'
